@@ -15,20 +15,22 @@
 # limitations under the License.
 #
 
-"""A simple application that demonstrates sharding counters
-   to achieve higher throughput.
+"""A simple application that demonstrates sharding counters.
+
+Uses sharded counters to achieve higher throughput.
 
 Demonstrates:
    * Sharding - Sharding a counter into N random pieces
-   * Memcache - Using memcache to cache the total counter value in generalcounter.
+   * Memcache - Using memcache to cache the total counter value in
+                general_counter.
 """
 
 import os
 import wsgiref.handlers
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
-import generalcounter
-import simplecounter
+import general_counter
+import simple_counter
 
 class CounterHandler(webapp.RequestHandler):
   """Handles displaying the values of the counters
@@ -37,8 +39,8 @@ class CounterHandler(webapp.RequestHandler):
 
   def get(self):
     template_values = {
-      'simpletotal': simplecounter.get_count(),
-      'generaltotal': generalcounter.get_count('FOO')
+      'simpletotal': simple_counter.get_count(),
+      'generaltotal': general_counter.get_count('FOO')
     }
     template_file = os.path.join(os.path.dirname(__file__), 'counter.html')
     self.response.out.write(template.render(template_file, template_values))
@@ -46,15 +48,15 @@ class CounterHandler(webapp.RequestHandler):
   def post(self):
     counter = self.request.get('counter')
     if counter == 'simple':
-      simplecounter.increment()
+      simple_counter.increment()
     else:
-      generalcounter.increment('FOO')
+      general_counter.increment('FOO')
     self.redirect("/")
 
 
 def main():
   application = webapp.WSGIApplication(
-  [  
+  [
     ('/', CounterHandler),
   ], debug=True)
   wsgiref.handlers.CGIHandler().run(application)
@@ -62,5 +64,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-  
-
