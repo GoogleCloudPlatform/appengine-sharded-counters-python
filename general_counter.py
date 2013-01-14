@@ -24,13 +24,11 @@ from google.appengine.ext import ndb
 
 class GeneralCounterShardConfig(ndb.Model):
   """Tracks the number of shards for each named counter."""
-  name = ndb.StringProperty(required=True)
   num_shards = ndb.IntegerProperty(required=True, default=20)
 
 
 class GeneralCounterShard(ndb.Model):
   """Shards for each named counter"""
-  name = ndb.StringProperty(required=True)
   count = ndb.IntegerProperty(required=True, default=0)
 
 
@@ -43,7 +41,8 @@ def get_count(name):
   total = memcache.get(name)
   if total is None:
     total = 0
-    for counter in GeneralCounterShard.query(GeneralCounterShard.name == name):
+    ancestor_key = ndb.Key(GeneralCounterShard, name)
+    for counter in GeneralCounterShard.query(ancestor=ancestor_key):
       total += counter.count
     memcache.add(name, total, 60)
   return total
@@ -56,13 +55,13 @@ def increment(name):
   Args:
     name: The name of the counter.
   """
-  config = GeneralCounterShardConfig.get_or_insert(name, name=name)
+  config = GeneralCounterShardConfig.get_or_insert(name)
 
   index = random.randint(0, config.num_shards - 1)
-  shard_name = name + str(index)
-  counter = GeneralCounterShard.get_by_id(shard_name)
+  shard_key = ndb.Key(GeneralCounterShard, name, GeneralCounterShard, index)
+  counter = shard_key.get()
   if counter is None:
-    counter = GeneralCounterShard(id=shard_name, name=name)
+    counter = GeneralCounterShard(key=shard_key)
   counter.count += 1
   counter.put()
   # does nothing if the key does not exist
@@ -79,7 +78,7 @@ def increase_shards(name, num_shards):
     name: The name of the counter
     num_shards: How many shards to use
   """
-  config = GeneralCounterShardConfig.get_or_insert(name, name=name)
+  config = GeneralCounterShardConfig.get_or_insert(name)
   if config.num_shards < num_shards:
     config.num_shards = num_shards
     config.put()
