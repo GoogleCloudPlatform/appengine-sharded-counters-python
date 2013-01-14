@@ -37,44 +37,43 @@ DEFAULT_COUNTER_NAME = 'FOO'
 
 
 class CounterHandler(webapp2.RequestHandler):
-  """Handles displaying counter values and requests to increment either counter.
+    """Handles displaying counter values and requests to increment a counter.
 
-  Uses a simple and general counter and allows either to be updated.
-  """
-
-  @webapp2.cached_property
-  def jinja2(self):
-    """Cached property holding a Jinja2 instance."""
-    return jinja2.get_jinja2(app=self.app)
-
-  def render_response(self, template, **context):
-    """Use Jinja2 instance to render template and write to output.
-
-    Args:
-      template: filename (relative to $PROJECT/templates) that we are
-        rendering.
-      context: keyword arguments corresponding to variables in template.
+    Uses a simple and general counter and allows either to be updated.
     """
-    rendered_value = self.jinja2.render_template(template, **context)
-    self.response.write(rendered_value)
 
-  def get(self):
-    """GET handler for displaying counter values."""
-    simpletotal = simple_counter.get_count(),
-    generaltotal = general_counter.get_count(DEFAULT_COUNTER_NAME)
-    self.render_response('counter.html', simpletotal=simpletotal,
-                         generaltotal=generaltotal)
+    @webapp2.cached_property
+    def jinja2(self):
+        """Cached property holding a Jinja2 instance."""
+        return jinja2.get_jinja2(app=self.app)
 
-  def post(self):
-    """POST handler for updating a counter which is specified in the payload."""
-    counter = self.request.get('counter')
-    if counter == 'simple':
-      simple_counter.increment()
-    else:
-      general_counter.increment(DEFAULT_COUNTER_NAME)
-    self.redirect('/')
+    def render_response(self, template, **context):
+        """Use Jinja2 instance to render template and write to output.
+
+        Args:
+          template: filename (relative to $PROJECT/templates) that we are
+              rendering.
+          context: keyword arguments corresponding to variables in template.
+        """
+        rendered_value = self.jinja2.render_template(template, **context)
+        self.response.write(rendered_value)
+
+    def get(self):
+        """GET handler for displaying counter values."""
+        simple_total = simple_counter.get_count(),
+        general_total = general_counter.get_count(DEFAULT_COUNTER_NAME)
+        self.render_response('counter.html', simple_total=simple_total,
+                             general_total=general_total)
+
+    def post(self):
+        """POST handler for updating a counter which is specified in payload."""
+        counter = self.request.get('counter')
+        if counter == 'simple':
+            simple_counter.increment()
+        else:
+            general_counter.increment(DEFAULT_COUNTER_NAME)
+        self.redirect('/')
 
 
-APPLICATION = webapp2.WSGIApplication(
-    [('/', CounterHandler)],
-    debug=True)
+APPLICATION = webapp2.WSGIApplication([('/', CounterHandler)],
+                                      debug=True)
