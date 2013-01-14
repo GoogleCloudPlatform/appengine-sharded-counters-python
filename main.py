@@ -17,13 +17,14 @@
 
 """A simple application that demonstrates sharding counters.
 
-Uses sharded counters to achieve higher throughput.
+Counters can be sharded to achieve higher throughput.
 
 Demonstrates:
-   * Sharding - Sharding a counter into N random pieces
+   * Sharding - Sharding a counter into N random pieces.
    * Memcache - Using memcache to cache the total counter value in
                 general_counter.
 """
+
 
 import webapp2
 from webapp2_extras import jinja2
@@ -32,9 +33,13 @@ import general_counter
 import simple_counter
 
 
+DEFAULT_COUNTER_NAME = 'FOO'
+
+
 class CounterHandler(webapp2.RequestHandler):
-  """Handles displaying the values of the counters
-  and requests to increment either counter.
+  """Handles displaying counter values and requests to increment either counter.
+
+  Uses a simple and general counter and allows either to be updated.
   """
 
   @webapp2.cached_property
@@ -54,18 +59,20 @@ class CounterHandler(webapp2.RequestHandler):
     self.response.write(rendered_value)
 
   def get(self):
+    """GET handler for displaying counter values."""
     simpletotal = simple_counter.get_count(),
-    generaltotal = general_counter.get_count('FOO')
+    generaltotal = general_counter.get_count(DEFAULT_COUNTER_NAME)
     self.render_response('counter.html', simpletotal=simpletotal,
                          generaltotal=generaltotal)
 
   def post(self):
+    """POST handler for updating a counter which is specified in the payload."""
     counter = self.request.get('counter')
     if counter == 'simple':
       simple_counter.increment()
     else:
-      general_counter.increment('FOO')
-    self.redirect("/")
+      general_counter.increment(DEFAULT_COUNTER_NAME)
+    self.redirect('/')
 
 
 APPLICATION = webapp2.WSGIApplication(
