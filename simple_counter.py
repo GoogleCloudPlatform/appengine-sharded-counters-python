@@ -13,32 +13,36 @@
 # limitations under the License.
 #
 
-from google.appengine.ext import db
+"""A module implementing a simple sharded counter."""
+
+
 import random
 
-class SimpleCounterShard(db.Model):
-  """Shards for the counter"""
-  count = db.IntegerProperty(required=True, default=0)    
+from google.appengine.ext import ndb
+
 
 NUM_SHARDS = 20
+
+
+class SimpleCounterShard(ndb.Model):
+  """Shards for the counter"""
+  count = ndb.IntegerProperty(required=True, default=0)
+
 
 def get_count():
   """Retrieve the value for a given sharded counter."""
   total = 0
-  for counter in SimpleCounterShard.all():
+  for counter in SimpleCounterShard.query():
     total += counter.count
   return total
-    
+
+
+@ndb.transactional
 def increment():
   """Increment the value for a given sharded counter."""
-  def txn():
-    index = random.randint(0, NUM_SHARDS - 1)
-    shard_name = "shard" + str(index)
-    counter = SimpleCounterShard.get_by_key_name(shard_name)
-    if counter is None:
-      counter = SimpleCounterShard(key_name=shard_name)
-    counter.count += 1
-    counter.put()
-  db.run_in_transaction(txn)
-
-
+  shard_index = random.randint(0, NUM_SHARDS - 1)
+  counter = SimpleCounterShard.get_by_id(shard_index)
+  if counter is None:
+    counter = SimpleCounterShard(id=shard_index)
+  counter.count += 1
+  counter.put()
