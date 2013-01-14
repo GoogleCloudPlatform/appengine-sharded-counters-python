@@ -25,25 +25,39 @@ Demonstrates:
                 general_counter.
 """
 
-import os
-import wsgiref.handlers
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp import template
+import webapp2
+from webapp2_extras import jinja2
+
 import general_counter
 import simple_counter
 
-class CounterHandler(webapp.RequestHandler):
+
+class CounterHandler(webapp2.RequestHandler):
   """Handles displaying the values of the counters
   and requests to increment either counter.
   """
 
+  @webapp2.cached_property
+  def jinja2(self):
+    """Cached property holding a Jinja2 instance."""
+    return jinja2.get_jinja2(app=self.app)
+
+  def render_response(self, template, **context):
+    """Use Jinja2 instance to render template and write to output.
+
+    Args:
+      template: filename (relative to $PROJECT/templates) that we are
+        rendering.
+      context: keyword arguments corresponding to variables in template.
+    """
+    rendered_value = self.jinja2.render_template(template, **context)
+    self.response.write(rendered_value)
+
   def get(self):
-    template_values = {
-      'simpletotal': simple_counter.get_count(),
-      'generaltotal': general_counter.get_count('FOO')
-    }
-    template_file = os.path.join(os.path.dirname(__file__), 'counter.html')
-    self.response.out.write(template.render(template_file, template_values))
+    simpletotal = simple_counter.get_count(),
+    generaltotal = general_counter.get_count('FOO')
+    self.render_response('counter.html', simpletotal=simpletotal,
+                         generaltotal=generaltotal)
 
   def post(self):
     counter = self.request.get('counter')
@@ -54,13 +68,6 @@ class CounterHandler(webapp.RequestHandler):
     self.redirect("/")
 
 
-def main():
-  application = webapp.WSGIApplication(
-  [
-    ('/', CounterHandler),
-  ], debug=True)
-  wsgiref.handlers.CGIHandler().run(application)
-
-
-if __name__ == '__main__':
-  main()
+APPLICATION = webapp2.WSGIApplication(
+    [('/', CounterHandler)],
+    debug=True)
