@@ -25,12 +25,16 @@ NUM_SHARDS = 20
 
 
 class SimpleCounterShard(ndb.Model):
-    """Shards for the counter"""
-    count = ndb.IntegerProperty(required=True, default=0)
+    """Shards for the counter."""
+    count = ndb.IntegerProperty(default=0)
 
 
 def get_count():
-    """Retrieve the value for a given sharded counter."""
+    """Retrieve the value for a given sharded counter.
+
+    Returns:
+        Integer; the cumulative count of all (sharded) counters.
+    """
     total = 0
     for counter in SimpleCounterShard.query():
         total += counter.count

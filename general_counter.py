@@ -24,12 +24,12 @@ from google.appengine.ext import ndb
 
 class GeneralCounterShardConfig(ndb.Model):
     """Tracks the number of shards for each named counter."""
-    num_shards = ndb.IntegerProperty(required=True, default=20)
+    num_shards = ndb.IntegerProperty(default=20)
 
 
 class GeneralCounterShard(ndb.Model):
-    """Shards for each named counter"""
-    count = ndb.IntegerProperty(required=True, default=0)
+    """Shards for each named counter."""
+    count = ndb.IntegerProperty(default=0)
 
 
 def get_count(name):
@@ -37,6 +37,10 @@ def get_count(name):
 
     Args:
         name: The name of the counter.
+
+    Returns:
+        Integer; the cumulative count of all (sharded) counters for the given
+            counter name.
     """
     total = memcache.get(name)
     if total is None:
@@ -48,7 +52,6 @@ def get_count(name):
     return total
 
 
-@ndb.transactional
 def increment(name):
     """Increment the value for a given sharded counter.
 
@@ -56,8 +59,20 @@ def increment(name):
         name: The name of the counter.
     """
     config = GeneralCounterShardConfig.get_or_insert(name)
+    _increment(name, config.num_shards)
 
-    index = random.randint(0, config.num_shards - 1)
+
+@ndb.transactional
+def _increment(name, num_shards):
+    """Transactional helper to increment the value for a given sharded counter.
+
+    Also takes a number of shards to determine which shard will be used.
+
+    Args:
+        name: The name of the counter.
+        num_shards: How many shards to use.
+    """
+    index = random.randint(0, num_shards - 1)
     shard_key = ndb.Key(GeneralCounterShard, name, GeneralCounterShard, index)
     counter = shard_key.get()
     if counter is None:
@@ -75,8 +90,8 @@ def increase_shards(name, num_shards):
     Will never decrease the number of shards.
 
     Args:
-        name: The name of the counter
-        num_shards: How many shards to use
+        name: The name of the counter.
+        num_shards: How many shards to use.
     """
     config = GeneralCounterShardConfig.get_or_insert(name)
     if config.num_shards < num_shards:
