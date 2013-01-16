@@ -44,9 +44,9 @@ def get_count():
 @ndb.transactional
 def increment():
     """Increment the value for a given sharded counter."""
-    shard_index = random.randint(0, NUM_SHARDS - 1)
-    counter = SimpleCounterShard.get_by_id(shard_index)
+    shard_string_index = str(random.randint(0, NUM_SHARDS - 1))
+    counter = SimpleCounterShard.get_by_id(shard_string_index)
     if counter is None:
-        counter = SimpleCounterShard(id=shard_index)
+        counter = SimpleCounterShard(id=shard_string_index)
     counter.count += 1
     counter.put()
