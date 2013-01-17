@@ -100,7 +100,7 @@ def _increment(name, num_shards):
         counter = GeneralCounterShard(id=shard_key_string)
     counter.count += 1
     counter.put()
-    # does nothing if the key does not exist
+    # Memcache increment does nothing if the name is not a key in memcache
     memcache.incr(name)
 
 
