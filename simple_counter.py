@@ -25,12 +25,16 @@ NUM_SHARDS = 20
 
 
 class SimpleCounterShard(ndb.Model):
-    """Shards for the counter"""
-    count = ndb.IntegerProperty(required=True, default=0)
+    """Shards for the counter."""
+    count = ndb.IntegerProperty(default=0)
 
 
 def get_count():
-    """Retrieve the value for a given sharded counter."""
+    """Retrieve the value for a given sharded counter.
+
+    Returns:
+        Integer; the cumulative count of all (sharded) counters.
+    """
     total = 0
     for counter in SimpleCounterShard.query():
         total += counter.count
@@ -40,9 +44,9 @@ def get_count():
 @ndb.transactional
 def increment():
     """Increment the value for a given sharded counter."""
-    shard_index = random.randint(0, NUM_SHARDS - 1)
-    counter = SimpleCounterShard.get_by_id(shard_index)
+    shard_string_index = str(random.randint(0, NUM_SHARDS - 1))
+    counter = SimpleCounterShard.get_by_id(shard_string_index)
     if counter is None:
-        counter = SimpleCounterShard(id=shard_index)
+        counter = SimpleCounterShard(id=shard_string_index)
     counter.count += 1
     counter.put()
