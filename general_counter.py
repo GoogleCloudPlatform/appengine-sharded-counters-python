@@ -59,7 +59,7 @@ def get_count(name):
         name: The name of the counter.
 
     Returns:
-        Integer; the cumulative count of all (sharded) counters for the given
+        Integer; the cumulative count of all sharded counters for the given
             counter name.
     """
     total = memcache.get(name)

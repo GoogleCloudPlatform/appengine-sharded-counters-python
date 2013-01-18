@@ -33,7 +33,7 @@ def get_count():
     """Retrieve the value for a given sharded counter.
 
     Returns:
-        Integer; the cumulative count of all (sharded) counters.
+        Integer; the cumulative count of all sharded counters.
     """
     total = 0
     for counter in SimpleCounterShard.query():
